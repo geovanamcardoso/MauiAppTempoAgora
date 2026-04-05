@@ -1,14 +1,11 @@
 ﻿using MauiAppTempoAgora.Models;
 using MauiAppTempoAgora.Services;
 using System.Net;
-using System.Net.Http; 
-using System.Threading.Tasks;
 
 namespace MauiAppTempoAgora
 {
     public partial class MainPage : ContentPage
     {
-
         public MainPage()
         {
             InitializeComponent();
@@ -20,28 +17,20 @@ namespace MauiAppTempoAgora
             {
                 if (!string.IsNullOrEmpty(txt_cidade.Text))
                 {
-                    Tempo? t = await DataService.GetPrevisao(txt_cidade.Text.Trim());
+                    Tempo t = await DataService.GetPrevisao(txt_cidade.Text.Trim());
 
-                    if(t != null)
-                    {
-                        string dados_previsao = " ";
+                    string dados_previsao =
+                        $"Cidade: {txt_cidade.Text}\n" +
+                        $"Latitude: {t.lat}\n" +
+                        $"Longitude: {t.lon}\n" +
+                        $"Temperatura: {t.temp_min}°C a {t.temp_max}°C\n" +
+                        $"Descrição: {t.main} - {t.description}\n" +
+                        $"Visibilidade: {t.visibility} metros\n" +
+                        $"Vento: {t.speed} m/s\n" +
+                        $"Nascer do Sol: {t.sunrise}\n" +
+                        $"Pôr do Sol: {t.sunset}";
 
-                        dados_previsao = $"Cidade: {txt_cidade.Text}\n" +
-                            $"Latitude: {t.lat}\n" +
-                            $"Longitude: {t.lon}\n" +
-                            $"Temperatura: {t.temp_min}°C a {t.temp_max}°C\n" +
-                            $"Descrição: {t.main} - {t.description}\n" +
-                            $"Visibilidade: {t.visibility} metros\n" +
-                            $"Vento: {t.speed} m/s\n" +
-                            $"Nascer do Sol: {t.sunrise}\n" +
-                            $"Pôr do Sol: {t.sunset}";
-
-                        lbl_res.Text = dados_previsao;
-                    }
-                    else
-                    {
-                        lbl_res.Text = "Sem dados de previsão.";
-                    }
+                    lbl_res.Text = dados_previsao;
                 }
                 else
                 {
@@ -50,23 +39,28 @@ namespace MauiAppTempoAgora
             }
             catch (HttpRequestException aex)
             {
-                // Mensagem para cidade não encontrada
                 if (aex.StatusCode == HttpStatusCode.NotFound)
                 {
-                    await DisplayAlert("Cidade não encontrada", $"A cidade '{txt_cidade.Text}' não foi encontrada. Verifique o nome e tente novamente.", "OK");
+                    await DisplayAlert("Cidade não encontrada",
+                        $"A cidade '{txt_cidade.Text}' não foi encontrada. Verifique o nome e tente novamente.",
+                        "OK");
+
                     lbl_res.Text = string.Empty;
                 }
-                else if (aex.Message.Contains("Sem conexão"))
+                else if (aex.StatusCode == null)
                 {
-                    // Alerta para sem conexão
-                    await DisplayAlert("Sem conexão", "Sem conexão com a internet. Verifique sua conexão e tente novamente.", "OK");
+                    await DisplayAlert("Sem conexão",
+                        "Sem conexão com a internet. Verifique sua conexão e tente novamente.",
+                        "OK");
                 }
                 else
                 {
-                    await DisplayAlert("Erro", aex.Message, "OK");
+                    await DisplayAlert("Erro",
+                        "Erro ao buscar dados da API.",
+                        "OK");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await DisplayAlert("Ops", ex.Message, "OK");
             }
